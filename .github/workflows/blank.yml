@@ -29,6 +29,6 @@ jobs:
       - name: Run a one-line script
         run: |
           echo $GITHUB_REPOSITORY
-          echo ${{ env.GITHUB_REPOSITORY }}
+          echo ${{ secrets.FAKE_SECRET }}
         shell: bash
 
