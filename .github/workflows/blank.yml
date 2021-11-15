@@ -1,34 +1,51 @@
-# This is a basic workflow to help you get started with Actions
-
-name: CI
-
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
-    runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
+  job1:
+    runs-on: ubuntu-latest          # NOTE: both orka-actions-up and orka-actions-down run on `ubuntu-latest`
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: |
-          echo $GITHUB_REPOSITORY
-          echo ${{ secrets.FAKE_SECRET }}
-        shell: bash
-
+    - name: Job 1
+      id: job1
+      uses: jeff-vincent/orka-actions-up@v1.1.1
+      with:
+        orkaUser: ${{ secrets.ORKA_USER }}
+        orkaPass: ${{ secrets.ORKA_PASS }}
+        orkaBaseImage: gha_bigsur_v3.img             # NOTE: this `.img` file is the agent that has been defined in Orka
+        githubPat: ${{ secrets.GH_PAT }}             
+        vpnUser: ${{ secrets.VPN_USER }}
+        vpnPassword: ${{ secrets.VPN_PASSWORD }}
+        vpnAddress: ${{ secrets.VPN_ADDRESS }}
+        vpnServerCert: ${{ secrets.VPN_SERVER_CERT }}
+        vcpuCount: 6
+        coreCount: 6
+    outputs:
+      vm-name: ${{ steps.job1.outputs.vm-name }}
+         
+  job2:            # NOTE: this is where your macOS-based, GitHub Actions workflow will be executed.
+    needs: job1     
+    runs-on: [self-hosted, "${{ needs.job1.outputs.vm-name }}"]     # NOTE: this section of the workflow can contain any number of seperate jobs,
+    steps:                                                          # but each must have this `runs-on` value.
+    - name: Job 2
+      id: job2
+      run: |
+        sw_vers
+  job3:
+    if: always()
+    needs: [job1, job2]               # NOTE: all jobs you wish to run on the macOS instance, 
+    runs-on: ubuntu-latest            # along with the `orka-actions-up` job, must be listed here.
+    steps:
+    - name: Job 3
+      id: job3
+      uses: jeff-vincent/orka-actions-down@v1.1.0
+      with:
+        orkaUser: ${{ secrets.ORKA_USER }}
+        orkaPass: ${{ secrets.ORKA_PASS }}
+        githubPat: ${{ secrets.GH_PAT }}
+        vpnUser: ${{ secrets.VPN_USER }}
+        vpnPassword: ${{ secrets.VPN_PASSWORD }}
+        vpnAddress: ${{ secrets.VPN_ADDRESS }}
+        vpnServerCert: ${{ secrets.VPN_SERVER_CERT }}
+        vmName: ${{ needs.job1.outputs.vm-name }}
