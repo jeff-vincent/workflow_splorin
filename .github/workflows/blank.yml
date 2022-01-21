@@ -13,14 +13,14 @@ jobs:
       with:
         orkaUser: ${{ secrets.ORKA_USER }}
         orkaPass: ${{ secrets.ORKA_PASS }}
-        orkaBaseImage: gha_agent_bigsur_stable.img
+        orkaBaseImage: gha.img
         githubPat: ${{ secrets.GH_PAT }}             
         vpnUser: ${{ secrets.VPN_USER }}
         vpnPassword: ${{ secrets.VPN_PASSWORD }}
         vpnAddress: ${{ secrets.VPN_ADDRESS }}
         vpnServerCert: ${{ secrets.VPN_SERVER_CERT }}
-        vcpuCount: 3
-        coreCount: 3
+        vcpuCount: 6
+        coreCount: 6
     outputs:
       vm-name: ${{ steps.job1.outputs.vm-name }}
          
