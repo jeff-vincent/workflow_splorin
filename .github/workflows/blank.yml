@@ -13,7 +13,7 @@ jobs:
       with:
         orkaUser: ${{ secrets.ORKA_USER }}
         orkaPass: ${{ secrets.ORKA_PASS }}
-        orkaBaseImage: gha-test.img
+        orkaBaseImage: gha-demo.img
         githubPat: ${{ secrets.GH_PAT }}             
         vpnUser: ${{ secrets.VPN_USER }}
         vpnPassword: ${{ secrets.VPN_PASSWORD }}
