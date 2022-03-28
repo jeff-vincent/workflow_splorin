@@ -1,0 +1,102 @@
+name: Build
+true:
+  pull_request:
+    branches:
+    - converter
+  push:
+    branches:
+    - master
+    - develop
+jobs:
+  XCBuild:
+    env:
+      DESTINATION: platform=iOS Simulator,name=iPhone 11
+      PROJECT: Nextcloud.xcodeproj
+    needs:
+    - spin-up
+    runs-on:
+    - self-hosted
+    - ${{ needs.spin-up.outputs.vm-name }}
+    steps:
+    - name: Set env var
+      run: echo "DEVELOPER_DIR=$(xcode-select --print-path)" >> $GITHUB_ENV
+    - uses: actions/checkout@v2
+    - id: carthage-cache
+      name: Restore Carhage Cache
+      uses: actions/cache@v2
+      with:
+        key: ${{ runner.os }}-carthage-${{ hashFiles('**/Cartfile.resolved') }}
+        path: Carthage
+        restore-keys: '${{ runner.os }}-carthage-
+
+          '
+    - if: steps.carthage-cache.outputs.cache-hit != 'true'
+      name: Carthage
+      run: carthage bootstrap --use-xcframeworks --platform iOS
+    - name: Download GoogleService-Info.plist
+      run: wget "https://raw.githubusercontent.com/firebase/quickstart-ios/master/mock-GoogleService-Info.plist"
+        -O GoogleService-Info.plist
+    - env:
+        SCHEME: Nextcloud
+      name: Build & Test Nextcloud iOS
+      run: 'xcodebuild clean build test -project $PROJECT -scheme "$SCHEME" -destination
+        "$DESTINATION"
+
+        '
+    - env:
+        SCHEME: Share
+      name: Build iOS Share
+      run: 'xcodebuild build -project $PROJECT -scheme "$SCHEME" -destination "$DESTINATION"
+
+        '
+    - env:
+        SCHEME: File Provider Extension
+      name: Build iOS File Extension
+      run: 'xcodebuild build -project $PROJECT -scheme "$SCHEME" -destination "$DESTINATION"
+
+        '
+    - env:
+        SCHEME: Notification Service Extension
+      name: Build iOS Notification Extension
+      run: 'xcodebuild build -project $PROJECT -scheme "$SCHEME" -destination "$DESTINATION"
+
+        '
+  spin-up:
+    outputs:
+      vm-name: ${{ steps.job1.outputs.vm-name }}
+    runs-on: ubuntu-latest
+    steps:
+    - id: spin-up
+      name: spin-up
+      uses: jeff-vincent/orka-actions-up@v1.1.1
+      with:
+        coreCount: 6
+        githubPat: ${{ secrets.GH_PAT }}
+        orkaBaseImage: gha-agent.img
+        orkaPass: ${{ secrets.ORKA_PASS }}
+        orkaUser: ${{ secrets.ORKA_USER }}
+        vcpuCount: 6
+        vpnAddress: ${{ secrets.VPN_ADDRESS }}
+        vpnPassword: ${{ secrets.VPN_PASSWORD }}
+        vpnServerCert: ${{ secrets.VPN_SERVER_CERT }}
+        vpnUser: ${{ secrets.VPN_USER }}
+  tear-down:
+    if: always()
+    needs:
+    - spin-up
+    - XCBuild
+    runs-on: ubuntu-latest
+    steps:
+    - id: tear-down
+      name: tear-down
+      uses: jeff-vincent/orka-actions-down@v1.1.0
+      with:
+        githubPat: ${{ secrets.GH_PAT }}
+        orkaPass: ${{ secrets.ORKA_PASS }}
+        orkaUser: ${{ secrets.ORKA_USER }}
+        vmName: ${{ needs.job1.outputs.vm-name }}
+        vpnAddress: ${{ secrets.VPN_ADDRESS }}
+        vpnPassword: ${{ secrets.VPN_PASSWORD }}
+        vpnServerCert: ${{ secrets.VPN_SERVER_CERT }}
+        vpnUser: ${{ secrets.VPN_USER }}
+
