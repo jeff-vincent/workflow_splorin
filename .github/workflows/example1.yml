@@ -1,12 +1,11 @@
 name: Build
-true:
+on:
   pull_request:
     branches:
     - converter
   push:
     branches:
-    - master
-    - develop
+    - converter
 jobs:
   XCBuild:
     env:
