@@ -11,5 +11,7 @@ jobs:
         id: env-name
         with:
           pattern: ci-{name}
+          
+      - run: echo ${{ steps.env-name.outputs.name }}
         
 
