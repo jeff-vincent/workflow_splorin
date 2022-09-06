@@ -10,7 +10,7 @@ jobs:
       - uses: techvelocity/env-name-action@v1
         id: env-name
         with:
-          pattern: ci-{name}
+          pattern: ci-{branch}
           
       - run: echo ${{ steps.env-name.outputs.name }}
         
